@@ -1,0 +1,26 @@
+name: Update Plugins
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight
+
+jobs:
+  update-plugins:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v2
+
+      - name: 🔄 Update server and plugins
+        run: |
+          chmod +x ./scripts/update.sh
+          ./scripts/update.sh
+
+      - name: 🏷️ Commit and Push Changes
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add .
+          git commit -m "Update plugins"
+          git push
