@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v2
+
+      - name: ☕ Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      - name: 🔨 Build server
+        run: |
+          echo "Building the Paper Minecraft Server..."
+          # Add commands to build your server if necessary
+
+      - name: 🔄 Update server and plugins
+        run: |
+          chmod +x ./scripts/update.sh
+          ./scripts/update.sh
+
+      - name: 🧪 Test server
+        run: |
+          echo "eula=true" > eula.txt
+          java -jar server.jar --nogui &
+          SERVER_PID=$!
+          sleep 30
+          if ps -p $SERVER_PID > /dev/null
+          then
+            echo "Server is running"
+            kill $SERVER_PID
+          else
+            echo "Server failed to start"
+            exit 1
+          fi
+
+      - name: 🏷️ Create Release
+        id: create_release
+        run: |
+          git tag "v$(date +'%Y.%m.%d')"
+          git push origin "v$(date +'%Y.%m.%d')"
+
+      - name: 📦 Upload Release Assets
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "v$(date +'%Y.%m.%d')"
+          files: server.jar
+          name: Paper Minecraft Server Release - $(date +'%Y-%m-%d')
